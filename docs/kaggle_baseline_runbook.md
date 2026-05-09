@@ -41,6 +41,8 @@ Preferred one-command path:
 python scripts/run_kaggle_baseline.py
 ```
 
+The script auto-detects the mounted Kaggle input directory by finding the folder that contains both `train.csv` and `test.csv`.
+
 Equivalent manual path:
 
 ```bash
