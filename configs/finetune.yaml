@@ -1,0 +1,24 @@
+data:
+  train_path: /kaggle/input/llm-classification-finetuning/train.csv
+  test_path: /kaggle/input/llm-classification-finetuning/test.csv
+  sample_size: 5000
+  text_max_chars: 6000
+
+finetune:
+  model_name_or_path: distilbert-base-uncased
+  output_dir: outputs/finetune/distilbert_baseline
+  max_length: 512
+  learning_rate: 0.00002
+  train_batch_size: 8
+  eval_batch_size: 16
+  num_train_epochs: 1
+  weight_decay: 0.01
+  warmup_ratio: 0.05
+  gradient_accumulation_steps: 1
+
+train:
+  validation_size: 0.15
+  random_seed: 42
+
+outputs:
+  metrics_path: outputs/metrics/finetune_metrics.json

@@ -1,0 +1,27 @@
+data:
+  train_path: /kaggle/input/llm-classification-finetuning/train.csv
+  test_path: /kaggle/input/llm-classification-finetuning/test.csv
+  sample_size:
+  text_max_chars: 12000
+
+features:
+  max_features: 50000
+  ngram_range: [1, 2]
+  min_df: 2
+  max_df: 0.95
+  lowercase: true
+
+model:
+  type: tfidf_logreg
+  artifact_path: outputs/models/baseline_tfidf_logreg.joblib
+
+train:
+  validation_size: 0.15
+  random_seed: 42
+  max_iter: 1000
+  solver: lbfgs
+  class_weight: balanced
+  c: 2.0
+
+outputs:
+  metrics_path: outputs/metrics/baseline_metrics.json

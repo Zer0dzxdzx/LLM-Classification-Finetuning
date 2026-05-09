@@ -1,0 +1,4 @@
+id,prompt,response_a,response_b
+101,"Explain what a validation set is.","A validation set estimates performance on unseen examples during model development.","A validation set is the same as the final test labels."
+102,"Give one reason to use a config file.","It keeps experiment parameters explicit and reproducible.","It hides all choices from future readers."
+103,"What should a Kaggle submission contain?","The required id column and one probability column per target class.","Only the raw training labels."

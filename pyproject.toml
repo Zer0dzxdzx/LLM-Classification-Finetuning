@@ -1,0 +1,22 @@
+[project]
+name = "llm-classification-finetuning-learning"
+version = "0.1.0"
+description = "Learning-oriented Kaggle project for LLM Classification Finetuning."
+requires-python = ">=3.10,<3.14"
+dependencies = [
+  "pandas>=2.0",
+  "scikit-learn>=1.3",
+  "PyYAML>=6.0",
+  "joblib>=1.3",
+  "numpy>=1.24",
+]
+
+[project.optional-dependencies]
+finetune = [
+  "torch>=2.1",
+  "transformers>=4.40",
+  "accelerate>=0.29",
+]
+
+[tool.setuptools]
+packages = ["src"]

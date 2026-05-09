@@ -1,0 +1,10 @@
+id,prompt,response_a,response_b,winner_model_a,winner_model_b,winner_tie
+1,"Explain why leaves change color in autumn.","Leaves change color because chlorophyll breaks down and other pigments become visible.","They change because the tree paints them different colors each season.",1,0,0
+2,"Write a short Python function to add two numbers.","Use def add(a, b): return a + b.","You should multiply the numbers together.",1,0,0
+3,"What is overfitting in machine learning?","Overfitting means a model memorizes noise and performs poorly on new data.","It is when a model has no parameters at all.",1,0,0
+4,"Summarize the benefit of unit tests.","They can slow you down and are rarely useful.","Unit tests catch regressions and document expected behavior.",0,1,0
+5,"Give a safe cooking temperature tip for chicken.","Cook chicken until it reaches a safe internal temperature and juices run clear.","Chicken is always safe once the outside looks brown.",0,1,0
+6,"Define precision in classification.","Precision is the share of predicted positives that are true positives.","Precision is the total number of training rows.",0,1,0
+7,"Name one advantage of clear documentation.","Documentation helps teammates understand intent and maintain code.","Documentation helps teammates understand intent and maintain code.",0,0,1
+8,"What is a neutral answer to an uncertain question?","I do not have enough information to know.","I do not have enough information to know.",0,0,1
+9,"Describe a balanced model comparison.","Both answers are similar quality and neither is clearly better.","Both answers are similar quality and neither is clearly better.",0,0,1

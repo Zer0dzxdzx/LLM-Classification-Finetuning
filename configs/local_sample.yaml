@@ -1,0 +1,27 @@
+data:
+  train_path: data/sample/train.csv
+  test_path: data/sample/test.csv
+  sample_size:
+  text_max_chars: 4000
+
+features:
+  max_features: 2000
+  ngram_range: [1, 2]
+  min_df: 1
+  max_df: 1.0
+  lowercase: true
+
+model:
+  type: tfidf_logreg
+  artifact_path: outputs/models/local_sample_tfidf_logreg.joblib
+
+train:
+  validation_size: 0.34
+  random_seed: 42
+  max_iter: 500
+  solver: lbfgs
+  class_weight:
+  c: 1.0
+
+outputs:
+  metrics_path: outputs/metrics/local_sample_metrics.json

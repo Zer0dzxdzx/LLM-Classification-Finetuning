@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Kaggle credentials and private env files
+.kaggle/
+kaggle.json
+.env
+.env.*
+
+# Competition data and generated artifacts
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+outputs/*
+!outputs/.gitkeep
+submissions/*
+!submissions/.gitkeep
+models/*
+!models/.gitkeep
+
+# Model and binary artifacts
+*.joblib
+*.pkl
+*.pickle
+*.pt
+*.pth
+*.safetensors
+*.onnx
+
+# OS/editor
+.DS_Store
+.idea/
+.vscode/
