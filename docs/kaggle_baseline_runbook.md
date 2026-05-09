@@ -41,14 +41,18 @@ Preferred one-command path:
 python scripts/run_kaggle_baseline.py
 ```
 
-The script auto-detects the mounted Kaggle input directory by finding the folder that contains both `train.csv` and `test.csv`.
+The script auto-detects the mounted Kaggle input directory by finding the folder that contains both `train.csv` and `test.csv`. In Kaggle, it writes the required code-competition output to:
+
+```text
+/kaggle/working/submission.csv
+```
 
 Equivalent manual path:
 
 ```bash
 python -m src.train --config configs/baseline.yaml
-python -m src.predict --config configs/baseline.yaml --output submissions/submission.csv
-python -m src.check_submission submissions/submission.csv
+python -m src.predict --config configs/baseline.yaml --output /kaggle/working/submission.csv
+python -m src.check_submission /kaggle/working/submission.csv
 ```
 
 ## 4. Verify and Submit
@@ -57,12 +61,12 @@ Confirm the generated file:
 
 ```python
 import pandas as pd
-submission = pd.read_csv("submissions/submission.csv")
+submission = pd.read_csv("/kaggle/working/submission.csv")
 submission.head()
 submission[["winner_model_a", "winner_model_b", "winner_tie"]].sum(axis=1).describe()
 ```
 
-Submit `submissions/submission.csv` to the competition.
+Save a full Notebook version. Kaggle will privately rerun the selected version and look for `/kaggle/working/submission.csv`.
 
 ## 5. Record the Result
 

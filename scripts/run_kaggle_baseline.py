@@ -13,7 +13,8 @@ import yaml
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CONFIG = PROJECT_ROOT / "configs" / "baseline.yaml"
-DEFAULT_OUTPUT = PROJECT_ROOT / "submissions" / "submission.csv"
+KAGGLE_WORKING_ROOT = Path("/kaggle/working")
+DEFAULT_OUTPUT = None
 KAGGLE_INPUT_ROOT = Path("/kaggle/input")
 LABEL_COLUMNS = ["winner_model_a", "winner_model_b", "winner_tie"]
 
@@ -21,12 +22,12 @@ LABEL_COLUMNS = ["winner_model_a", "winner_model_b", "winner_tie"]
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Run the first Kaggle baseline end to end.")
     parser.add_argument("--config", default=str(DEFAULT_CONFIG), help="Baseline YAML config path.")
-    parser.add_argument("--output", default=str(DEFAULT_OUTPUT), help="Submission CSV output path.")
+    parser.add_argument("--output", help="Submission CSV output path.")
     parser.add_argument("--skip-tests", action="store_true", help="Skip unit tests before training.")
     args = parser.parse_args(argv)
 
     config_path = Path(args.config)
-    output_path = Path(args.output)
+    output_path = Path(args.output) if args.output else _default_output_path()
     if not config_path.is_absolute():
         config_path = PROJECT_ROOT / config_path
     if not output_path.is_absolute():
@@ -51,6 +52,12 @@ def main(argv: list[str] | None = None) -> None:
     )
     submission_summary = _summarize_submission(output_path)
     _print_experiment_log_template(config_path, output_path, train_result, predict_result, submission_summary)
+
+
+def _default_output_path(kaggle_working_root: Path = KAGGLE_WORKING_ROOT) -> Path:
+    if kaggle_working_root.exists():
+        return kaggle_working_root / "submission.csv"
+    return PROJECT_ROOT / "submissions" / "submission.csv"
 
 
 def _find_kaggle_data_dir(input_root: Path = KAGGLE_INPUT_ROOT) -> Path:

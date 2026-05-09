@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 import yaml
 
-from scripts.run_kaggle_baseline import _find_kaggle_data_dir, _write_runtime_config
+from scripts.run_kaggle_baseline import _default_output_path, _find_kaggle_data_dir, _write_runtime_config
 from tests.helpers import project_path
 
 
@@ -45,6 +45,17 @@ class RunKaggleBaselineTests(unittest.TestCase):
 
             self.assertEqual(config["data"]["train_path"], str(data_dir / "train.csv"))
             self.assertEqual(config["data"]["test_path"], str(data_dir / "test.csv"))
+
+    def test_default_output_uses_kaggle_working_when_available(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            fake_working = Path(tmp) / "working"
+            fake_working.mkdir()
+            self.assertEqual(_default_output_path(fake_working), fake_working / "submission.csv")
+
+    def test_default_output_falls_back_to_project_submissions_locally(self) -> None:
+        missing_working = Path("/definitely/not/a/kaggle/working")
+        with patch("scripts.run_kaggle_baseline.PROJECT_ROOT", Path("/repo")):
+            self.assertEqual(_default_output_path(missing_working), Path("/repo/submissions/submission.csv"))
 
 
 if __name__ == "__main__":
