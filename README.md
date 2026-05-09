@@ -54,6 +54,13 @@ python -m src.train --config configs/baseline.yaml
 python -m src.predict --config configs/baseline.yaml --output submissions/submission.csv
 ```
 
+在 Kaggle GPU 上完成 Transformer 微调后生成提交：
+
+```bash
+python -m src.finetune --config configs/finetune.yaml
+python -m src.predict_finetune --config configs/finetune.yaml --output submissions/submission_finetune.csv
+```
+
 运行测试：
 
 ```bash
@@ -73,3 +80,4 @@ python3 -m unittest discover -s tests
 - 不提交 `data/raw/`、`data/processed/`、`outputs/`、`submissions/`、`models/` 中的生成内容。
 - 不提交 `kaggle.json`、`.env` 或任何 API token。
 - 大模型权重、训练 checkpoint 和 Kaggle submission 默认只保留本地或 Kaggle 环境。
+- 提交前运行 `python3 -m unittest discover -s tests`，其中 notebook hygiene 测试会拒绝已执行输出，避免意外提交原始比赛文本。

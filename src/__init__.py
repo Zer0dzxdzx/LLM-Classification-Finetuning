@@ -6,6 +6,7 @@ __all__ = [
     "data",
     "finetune",
     "predict",
+    "predict_finetune",
     "submission",
     "train",
 ]

@@ -97,17 +97,18 @@ def make_config(raw: dict[str, Any], project_root: str | Path | None = None) -> 
     data = DataConfig(
         train_path=_resolve_path(_required(data_raw, "train_path"), root),
         test_path=_resolve_path(_required(data_raw, "test_path"), root),
-        sample_size=_optional_int(data_raw.get("sample_size")),
-        text_max_chars=_optional_int(data_raw.get("text_max_chars")),
+        sample_size=_optional_positive_int(data_raw.get("sample_size"), "data.sample_size"),
+        text_max_chars=_optional_positive_int(data_raw.get("text_max_chars"), "data.text_max_chars"),
     )
 
     features = FeatureConfig(
-        max_features=int(feature_raw.get("max_features", 50000)),
+        max_features=_positive_int(feature_raw.get("max_features", 50000), "features.max_features"),
         ngram_range=_ngram_range(feature_raw.get("ngram_range", [1, 2])),
-        min_df=feature_raw.get("min_df", 2),
-        max_df=feature_raw.get("max_df", 0.95),
+        min_df=_document_frequency(feature_raw.get("min_df", 2), "features.min_df"),
+        max_df=_document_frequency(feature_raw.get("max_df", 0.95), "features.max_df"),
         lowercase=bool(feature_raw.get("lowercase", True)),
     )
+    _validate_document_frequency_range(features.min_df, features.max_df)
 
     model = ModelConfig(
         type=str(model_raw.get("type", "tfidf_logreg")),
@@ -115,12 +116,12 @@ def make_config(raw: dict[str, Any], project_root: str | Path | None = None) -> 
     )
 
     train = TrainConfig(
-        validation_size=float(train_raw.get("validation_size", 0.15)),
-        random_seed=int(train_raw.get("random_seed", 42)),
-        max_iter=int(train_raw.get("max_iter", 1000)),
+        validation_size=_ratio(train_raw.get("validation_size", 0.15), "train.validation_size", inclusive_upper=False),
+        random_seed=_non_negative_int(train_raw.get("random_seed", 42), "train.random_seed"),
+        max_iter=_positive_int(train_raw.get("max_iter", 1000), "train.max_iter"),
         solver=str(train_raw.get("solver", "lbfgs")),
-        class_weight=train_raw.get("class_weight", "balanced"),
-        c=float(train_raw.get("c", 1.0)),
+        class_weight=_class_weight(train_raw.get("class_weight", "balanced")),
+        c=_positive_float(train_raw.get("c", 1.0), "train.c"),
     )
 
     outputs = OutputConfig(
@@ -132,14 +133,17 @@ def make_config(raw: dict[str, Any], project_root: str | Path | None = None) -> 
         finetune = FinetuneConfig(
             model_name_or_path=str(finetune_raw.get("model_name_or_path", "distilbert-base-uncased")),
             output_dir=_resolve_path(finetune_raw.get("output_dir", "outputs/finetune/model"), root),
-            max_length=int(finetune_raw.get("max_length", 512)),
-            learning_rate=float(finetune_raw.get("learning_rate", 2e-5)),
-            train_batch_size=int(finetune_raw.get("train_batch_size", 8)),
-            eval_batch_size=int(finetune_raw.get("eval_batch_size", 16)),
-            num_train_epochs=float(finetune_raw.get("num_train_epochs", 1)),
-            weight_decay=float(finetune_raw.get("weight_decay", 0.01)),
-            warmup_ratio=float(finetune_raw.get("warmup_ratio", 0.05)),
-            gradient_accumulation_steps=int(finetune_raw.get("gradient_accumulation_steps", 1)),
+            max_length=_positive_int(finetune_raw.get("max_length", 512), "finetune.max_length"),
+            learning_rate=_positive_float(finetune_raw.get("learning_rate", 2e-5), "finetune.learning_rate"),
+            train_batch_size=_positive_int(finetune_raw.get("train_batch_size", 8), "finetune.train_batch_size"),
+            eval_batch_size=_positive_int(finetune_raw.get("eval_batch_size", 16), "finetune.eval_batch_size"),
+            num_train_epochs=_positive_float(finetune_raw.get("num_train_epochs", 1), "finetune.num_train_epochs"),
+            weight_decay=_non_negative_float(finetune_raw.get("weight_decay", 0.01), "finetune.weight_decay"),
+            warmup_ratio=_ratio(finetune_raw.get("warmup_ratio", 0.05), "finetune.warmup_ratio"),
+            gradient_accumulation_steps=_positive_int(
+                finetune_raw.get("gradient_accumulation_steps", 1),
+                "finetune.gradient_accumulation_steps",
+            ),
         )
 
     return ProjectConfig(
@@ -186,6 +190,80 @@ def _optional_int(value: Any) -> int | None:
     if value in (None, ""):
         return None
     return int(value)
+
+
+def _optional_positive_int(value: Any, name: str) -> int | None:
+    if value in (None, ""):
+        return None
+    return _positive_int(value, name)
+
+
+def _positive_int(value: Any, name: str) -> int:
+    number = int(value)
+    if number <= 0:
+        raise ValueError(f"{name} must be a positive integer")
+    return number
+
+
+def _non_negative_int(value: Any, name: str) -> int:
+    number = int(value)
+    if number < 0:
+        raise ValueError(f"{name} must be a non-negative integer")
+    return number
+
+
+def _positive_float(value: Any, name: str) -> float:
+    number = float(value)
+    if number <= 0:
+        raise ValueError(f"{name} must be a positive number")
+    return number
+
+
+def _non_negative_float(value: Any, name: str) -> float:
+    number = float(value)
+    if number < 0:
+        raise ValueError(f"{name} must be a non-negative number")
+    return number
+
+
+def _ratio(value: Any, name: str, inclusive_upper: bool = True) -> float:
+    number = float(value)
+    upper_ok = number <= 1.0 if inclusive_upper else number < 1.0
+    if number < 0.0 or not upper_ok:
+        boundary = "[0, 1]" if inclusive_upper else "[0, 1)"
+        raise ValueError(f"{name} must be in the range {boundary}")
+    if name == "train.validation_size" and number == 0.0:
+        raise ValueError("train.validation_size must be greater than 0 for stratified validation")
+    return number
+
+
+def _document_frequency(value: Any, name: str) -> int | float:
+    if isinstance(value, int):
+        if value < 1:
+            raise ValueError(f"{name} as an integer must be at least 1")
+        return value
+
+    number = float(value)
+    if number <= 0:
+        raise ValueError(f"{name} must be greater than 0")
+    if number <= 1:
+        return number
+    if number.is_integer():
+        return int(number)
+    raise ValueError(f"{name} must be an integer count or a float in (0, 1]")
+
+
+def _validate_document_frequency_range(min_df: int | float, max_df: int | float) -> None:
+    if isinstance(min_df, float) and isinstance(max_df, float) and min_df > max_df:
+        raise ValueError("features.min_df cannot be greater than features.max_df when both are ratios")
+
+
+def _class_weight(value: Any) -> str | dict[str, float] | None:
+    if value in (None, ""):
+        return None
+    if value == "balanced" or isinstance(value, dict):
+        return value
+    raise ValueError("train.class_weight must be null, 'balanced', or a class-to-weight mapping")
 
 
 def _ngram_range(value: Any) -> tuple[int, int]:

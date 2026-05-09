@@ -11,11 +11,12 @@ from src.config import load_config
 from src.data import LABEL_COLUMNS
 from src.predict import run_prediction
 from src.train import run_training
+from tests.helpers import project_path
 
 
 class WorkflowTests(unittest.TestCase):
     def test_local_sample_training_and_prediction(self) -> None:
-        base_config = load_config("configs/local_sample.yaml")
+        base_config = load_config(project_path("configs", "local_sample.yaml"))
 
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
