@@ -54,6 +54,12 @@ python -m src.train --config configs/baseline.yaml
 python -m src.predict --config configs/baseline.yaml --output submissions/submission.csv
 ```
 
+在 Kaggle Notebook 中也可以用一条命令跑完测试、训练、预测和提交文件校验：
+
+```bash
+python scripts/run_kaggle_baseline.py
+```
+
 在 Kaggle GPU 上完成 Transformer 微调后生成提交：
 
 ```bash
@@ -72,8 +78,9 @@ python3 -m unittest discover -s tests
 1. 阅读 `docs/learning_roadmap.md`，明确两周安排。
 2. 运行 `notebooks/01_eda.ipynb`，理解数据字段、标签分布和文本长度。
 3. 运行 `notebooks/02_baseline.ipynb`，完成 TF-IDF + Logistic Regression baseline。
-4. 运行 `notebooks/03_finetune_kaggle.ipynb`，在 Kaggle GPU 上做小规模 Transformer 微调。
-5. 将每次实验结论写入 `docs/experiment_log.md`。
+4. 按 `docs/kaggle_baseline_runbook.md` 在 Kaggle 上提交第一版 baseline。
+5. 运行 `notebooks/03_finetune_kaggle.ipynb`，在 Kaggle GPU 上做小规模 Transformer 微调。
+6. 将每次实验结论写入 `docs/experiment_log.md`。
 
 ## 安全约束
 

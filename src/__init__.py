@@ -2,6 +2,7 @@
 
 __all__ = [
     "baseline",
+    "check_submission",
     "config",
     "data",
     "finetune",
