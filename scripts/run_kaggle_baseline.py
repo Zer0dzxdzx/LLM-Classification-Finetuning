@@ -148,14 +148,16 @@ def _print_experiment_log_template(
     print("\n=== Baseline run complete ===")
     print(json.dumps({"prediction": predict_result, "submission": submission_summary}, indent=2, ensure_ascii=False))
     print("\nPaste this into docs/experiment_log.md after you submit on Kaggle:\n")
+    config_display = _display_path(config_path)
+    output_display = _display_path(output_path)
     print(
         "\n".join(
             [
                 f"Date: {datetime.now(timezone.utc).date().isoformat()}",
-                f"Config: {config_path.relative_to(PROJECT_ROOT)}",
+                f"Config: {config_display}",
                 "Hypothesis: TF-IDF + Logistic Regression can provide the first reliable baseline.",
                 "Command:",
-                f"  python scripts/run_kaggle_baseline.py --config {config_path.relative_to(PROJECT_ROOT)} --output {output_path.relative_to(PROJECT_ROOT)}",
+                f"  python scripts/run_kaggle_baseline.py --config {config_display} --output {output_display}",
                 f"Validation log loss: {train_result.get('validation_log_loss')}",
                 f"Validation accuracy: {train_result.get('validation_accuracy')}",
                 "Public leaderboard:",
@@ -165,6 +167,13 @@ def _print_experiment_log_template(
             ]
         )
     )
+
+
+def _display_path(path: Path) -> str:
+    try:
+        return str(path.relative_to(PROJECT_ROOT))
+    except ValueError:
+        return str(path)
 
 
 if __name__ == "__main__":

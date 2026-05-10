@@ -7,7 +7,12 @@ from unittest.mock import patch
 
 import yaml
 
-from scripts.run_kaggle_baseline import _default_output_path, _find_kaggle_data_dir, _write_runtime_config
+from scripts.run_kaggle_baseline import (
+    _default_output_path,
+    _display_path,
+    _find_kaggle_data_dir,
+    _write_runtime_config,
+)
 from tests.helpers import project_path
 
 
@@ -56,6 +61,11 @@ class RunKaggleBaselineTests(unittest.TestCase):
         missing_working = Path("/definitely/not/a/kaggle/working")
         with patch("scripts.run_kaggle_baseline.PROJECT_ROOT", Path("/repo")):
             self.assertEqual(_default_output_path(missing_working), Path("/repo/submissions/submission.csv"))
+
+    def test_display_path_accepts_project_external_output(self) -> None:
+        with patch("scripts.run_kaggle_baseline.PROJECT_ROOT", Path("/kaggle/working/repo")):
+            self.assertEqual(_display_path(Path("/kaggle/working/repo/configs/baseline.yaml")), "configs/baseline.yaml")
+            self.assertEqual(_display_path(Path("/kaggle/working/submission.csv")), "/kaggle/working/submission.csv")
 
 
 if __name__ == "__main__":
