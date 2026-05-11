@@ -9,7 +9,7 @@ from sklearn.compose import ColumnTransformer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, log_loss
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import StratifiedKFold, train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
@@ -29,6 +29,7 @@ EXPERIMENT = {
     "c": 2.0,
     "text_max_chars": 12000,
     "validation_size": 0.15,
+    "cv_folds": 1,
     "random_seed": 42,
 }
 
@@ -187,23 +188,56 @@ test_raw = pd.read_csv(data_dir / "test.csv")
 train_df = make_frame(train_raw, include_target=True)
 test_df = make_frame(test_raw, include_target=False)
 
-train_part, valid_part = train_test_split(
-    train_df,
-    test_size=EXPERIMENT["validation_size"],
-    random_state=EXPERIMENT["random_seed"],
-    stratify=train_df["target"],
-)
-
-pipeline = build_pipeline()
-pipeline.fit(train_part, train_part["target"])
-valid_raw = pipeline.predict_proba(valid_part)
-valid_classes = list(pipeline.named_steps["classifier"].classes_)
-valid_probs = align_probabilities(valid_raw, valid_classes)
-valid_predictions = pd.Series(valid_probs.argmax(axis=1)).map(dict(enumerate(LABEL_COLUMNS)))
-
 print("Experiment:", EXPERIMENT["name"])
-print("Validation log loss:", log_loss(valid_part["target"], valid_probs, labels=LABEL_COLUMNS))
-print("Validation accuracy:", accuracy_score(valid_part["target"], valid_predictions))
+if EXPERIMENT["cv_folds"] > 1:
+    splitter = StratifiedKFold(
+        n_splits=EXPERIMENT["cv_folds"],
+        shuffle=True,
+        random_state=EXPERIMENT["random_seed"],
+    )
+    fold_metrics = []
+    for fold, (train_index, valid_index) in enumerate(
+        splitter.split(train_df, train_df["target"]),
+        start=1,
+    ):
+        train_part = train_df.iloc[train_index]
+        valid_part = train_df.iloc[valid_index]
+        pipeline = build_pipeline()
+        pipeline.fit(train_part, train_part["target"])
+        valid_raw = pipeline.predict_proba(valid_part)
+        valid_classes = list(pipeline.named_steps["classifier"].classes_)
+        valid_probs = align_probabilities(valid_raw, valid_classes)
+        valid_predictions = pd.Series(valid_probs.argmax(axis=1)).map(dict(enumerate(LABEL_COLUMNS)))
+        fold_metrics.append(
+            {
+                "fold": fold,
+                "valid_rows": len(valid_part),
+                "log_loss": log_loss(valid_part["target"], valid_probs, labels=LABEL_COLUMNS),
+                "accuracy": accuracy_score(valid_part["target"], valid_predictions),
+            }
+        )
+        print(fold_metrics[-1])
+    total_rows = sum(item["valid_rows"] for item in fold_metrics)
+    validation_log_loss = sum(item["log_loss"] * item["valid_rows"] for item in fold_metrics) / total_rows
+    validation_accuracy = sum(item["accuracy"] * item["valid_rows"] for item in fold_metrics) / total_rows
+else:
+    train_part, valid_part = train_test_split(
+        train_df,
+        test_size=EXPERIMENT["validation_size"],
+        random_state=EXPERIMENT["random_seed"],
+        stratify=train_df["target"],
+    )
+    pipeline = build_pipeline()
+    pipeline.fit(train_part, train_part["target"])
+    valid_raw = pipeline.predict_proba(valid_part)
+    valid_classes = list(pipeline.named_steps["classifier"].classes_)
+    valid_probs = align_probabilities(valid_raw, valid_classes)
+    valid_predictions = pd.Series(valid_probs.argmax(axis=1)).map(dict(enumerate(LABEL_COLUMNS)))
+    validation_log_loss = log_loss(valid_part["target"], valid_probs, labels=LABEL_COLUMNS)
+    validation_accuracy = accuracy_score(valid_part["target"], valid_predictions)
+
+print("Validation log loss:", validation_log_loss)
+print("Validation accuracy:", validation_accuracy)
 
 final_pipeline = build_pipeline()
 final_pipeline.fit(train_df, train_df["target"])

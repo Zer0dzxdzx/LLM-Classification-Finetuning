@@ -34,3 +34,5 @@ Every template writes:
 ```
 
 and checks that probability rows sum to 1.
+
+Set `EXPERIMENT["cv_folds"]` to `3` when you want the cell to report 3-fold validation before fitting the final model on all training rows.

@@ -18,7 +18,7 @@ def run_prediction(config: ProjectConfig, output_path: str | Path) -> dict[str, 
     class_order = artifact.get("class_order") or list(pipeline.named_steps["classifier"].classes_)
 
     test_frame = load_test_frame(config.data.test_path, text_max_chars=config.data.text_max_chars)
-    raw_probabilities = pipeline.predict_proba(test_frame)
+    raw_probabilities = predict_probabilities_from_artifact(pipeline, test_frame)
     probabilities = align_probabilities(raw_probabilities, class_order, LABEL_COLUMNS)
     submission = make_submission_frame(test_frame["id"], probabilities)
     destination = write_submission(submission, output_path)
@@ -44,6 +44,15 @@ def load_model_artifact(path: str | Path) -> dict[str, Any]:
     if labels != LABEL_COLUMNS:
         raise ValueError(f"Artifact label columns {labels} do not match expected {LABEL_COLUMNS}")
     return artifact
+
+
+def predict_probabilities_from_artifact(pipeline: Any, test_frame: Any) -> Any:
+    steps = getattr(pipeline, "named_steps", {})
+    if "features" in steps:
+        return pipeline.predict_proba(test_frame)
+    if "tfidf" in steps:
+        return pipeline.predict_proba(test_frame["text"])
+    return pipeline.predict_proba(test_frame)
 
 
 def main(argv: list[str] | None = None) -> None:

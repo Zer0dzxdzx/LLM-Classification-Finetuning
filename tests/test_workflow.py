@@ -6,10 +6,14 @@ from dataclasses import replace
 from pathlib import Path
 
 import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import Pipeline
 
 from src.config import load_config
 from src.data import LABEL_COLUMNS
 from src.predict import run_prediction
+from src.predict import predict_probabilities_from_artifact
 from src.train import run_training
 from tests.helpers import project_path
 
@@ -69,6 +73,31 @@ class WorkflowTests(unittest.TestCase):
             self.assertEqual(result["rows"], 3)
             submission = pd.read_csv(output_path)
             self.assertTrue(((submission[LABEL_COLUMNS].sum(axis=1) - 1.0).abs() < 1e-6).all())
+
+    def test_legacy_tfidf_artifact_prediction_uses_text_series(self) -> None:
+        train_frame = pd.DataFrame(
+            {
+                "text": ["a wins", "b wins", "tie case", "a better", "b better", "same"],
+                "target": LABEL_COLUMNS * 2,
+            }
+        )
+        legacy_pipeline = Pipeline(
+            [
+                ("tfidf", TfidfVectorizer()),
+                ("classifier", LogisticRegression(max_iter=100, class_weight=None)),
+            ]
+        )
+        legacy_pipeline.fit(train_frame["text"], train_frame["target"])
+        test_frame = pd.DataFrame(
+            {
+                "text": ["a answer", "b answer", "same answer"],
+                "prompt_chars": [1.0, 1.0, 1.0],
+            }
+        )
+
+        probabilities = predict_probabilities_from_artifact(legacy_pipeline, test_frame)
+
+        self.assertEqual(probabilities.shape, (3, 3))
 
 
 if __name__ == "__main__":

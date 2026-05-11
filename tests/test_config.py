@@ -59,6 +59,21 @@ class ConfigTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "features.kind"):
             make_config(raw, project_root=PROJECT_ROOT)
 
+    def test_quoted_boolean_values_parse_strictly(self) -> None:
+        raw = {
+            "data": {"train_path": "train.csv", "test_path": "test.csv"},
+            "features": {"lowercase": "false", "use_text_stats": "true"},
+        }
+
+        config = make_config(raw, project_root=PROJECT_ROOT)
+
+        self.assertFalse(config.features.lowercase)
+        self.assertTrue(config.features.use_text_stats)
+
+        raw["features"]["lowercase"] = "maybe"
+        with self.assertRaisesRegex(ValueError, "features.lowercase"):
+            make_config(raw, project_root=PROJECT_ROOT)
+
 
 if __name__ == "__main__":
     unittest.main()

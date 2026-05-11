@@ -107,6 +107,14 @@ def _run_cv_training(config: ProjectConfig, train_frame: pd.DataFrame) -> dict[s
     final_class_order = list(final_pipeline.named_steps["classifier"].classes_)
     _save_artifact(config, final_pipeline, final_class_order)
 
+    total_valid_rows = sum(item["valid_rows"] for item in fold_metrics)
+    weighted_log_loss = sum(
+        item["validation_log_loss"] * item["valid_rows"] for item in fold_metrics
+    ) / total_valid_rows
+    weighted_accuracy = sum(
+        item["validation_accuracy"] * item["valid_rows"] for item in fold_metrics
+    ) / total_valid_rows
+
     return {
         "model_type": config.model.type,
         "feature_kind": config.features.kind,
@@ -116,8 +124,8 @@ def _run_cv_training(config: ProjectConfig, train_frame: pd.DataFrame) -> dict[s
         "fit_rows": int(len(train_frame)),
         "label_columns": LABEL_COLUMNS,
         "classifier_class_order": final_class_order,
-        "validation_log_loss": float(pd.Series([item["validation_log_loss"] for item in fold_metrics]).mean()),
-        "validation_accuracy": float(pd.Series([item["validation_accuracy"] for item in fold_metrics]).mean()),
+        "validation_log_loss": float(weighted_log_loss),
+        "validation_accuracy": float(weighted_accuracy),
         "fold_metrics": fold_metrics,
         "artifact_path": str(config.model.artifact_path),
     }

@@ -114,8 +114,8 @@ def make_config(raw: dict[str, Any], project_root: str | Path | None = None) -> 
         char_max_features=_optional_positive_int(feature_raw.get("char_max_features"), "features.char_max_features"),
         min_df=_document_frequency(feature_raw.get("min_df", 2), "features.min_df"),
         max_df=_document_frequency(feature_raw.get("max_df", 0.95), "features.max_df"),
-        lowercase=bool(feature_raw.get("lowercase", True)),
-        use_text_stats=bool(feature_raw.get("use_text_stats", False)),
+        lowercase=_bool(feature_raw.get("lowercase", True), "features.lowercase"),
+        use_text_stats=_bool(feature_raw.get("use_text_stats", False), "features.use_text_stats"),
     )
     _validate_document_frequency_range(features.min_df, features.max_df)
 
@@ -274,6 +274,18 @@ def _class_weight(value: Any) -> str | dict[str, float] | None:
     if value == "balanced" or isinstance(value, dict):
         return value
     raise ValueError("train.class_weight must be null, 'balanced', or a class-to-weight mapping")
+
+
+def _bool(value: Any, name: str) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"true", "1", "yes", "y"}:
+            return True
+        if normalized in {"false", "0", "no", "n"}:
+            return False
+    raise ValueError(f"{name} must be a boolean")
 
 
 def _feature_kind(value: Any) -> str:
