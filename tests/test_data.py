@@ -4,7 +4,7 @@ import unittest
 
 import pandas as pd
 
-from src.data import build_pair_text, load_training_frame, normalize_text, target_from_row
+from src.data import TEXT_STAT_COLUMNS, build_pair_text, load_training_frame, normalize_text, target_from_row
 from tests.helpers import project_path
 
 
@@ -35,9 +35,11 @@ class DataTests(unittest.TestCase):
 
     def test_load_training_frame_from_sample(self) -> None:
         frame = load_training_frame(project_path("data", "sample", "train.csv"))
-        self.assertEqual(set(frame.columns), {"id", "text", "target"})
+        self.assertEqual(set(frame.columns), {"id", "text", "target", *TEXT_STAT_COLUMNS})
         self.assertEqual(len(frame), 9)
         self.assertEqual(set(frame["target"]), {"winner_model_a", "winner_model_b", "winner_tie"})
+        non_negative_stats = [column for column in TEXT_STAT_COLUMNS if column != "response_char_delta"]
+        self.assertTrue((frame[non_negative_stats] >= 0).all().all())
 
 
 if __name__ == "__main__":

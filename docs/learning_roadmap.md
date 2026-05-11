@@ -20,10 +20,12 @@ Day 3:
 Day 4:
 - Improve text construction and TF-IDF parameters.
 - Compare word n-grams, character n-grams, truncation, and class weights.
+- Run `configs/tfidf_char.yaml` and `configs/tfidf_word_char.yaml`.
 
 Day 5:
 - Review validation errors.
 - Manually inspect cases where the baseline is confidently wrong.
+- Test text-stat features with `configs/tfidf_features.yaml`.
 
 ## Week 2: Finetune and Reflect
 

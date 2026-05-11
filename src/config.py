@@ -17,11 +17,15 @@ class DataConfig:
 
 @dataclass(frozen=True)
 class FeatureConfig:
+    kind: str = "word"
     max_features: int = 50000
     ngram_range: tuple[int, int] = (1, 2)
+    char_ngram_range: tuple[int, int] = (3, 5)
+    char_max_features: int | None = None
     min_df: int | float = 2
     max_df: int | float = 0.95
     lowercase: bool = True
+    use_text_stats: bool = False
 
 
 @dataclass(frozen=True)
@@ -33,6 +37,7 @@ class ModelConfig:
 @dataclass(frozen=True)
 class TrainConfig:
     validation_size: float = 0.15
+    cv_folds: int = 1
     random_seed: int = 42
     max_iter: int = 1000
     solver: str = "lbfgs"
@@ -102,11 +107,15 @@ def make_config(raw: dict[str, Any], project_root: str | Path | None = None) -> 
     )
 
     features = FeatureConfig(
+        kind=_feature_kind(feature_raw.get("kind", feature_raw.get("type", "word"))),
         max_features=_positive_int(feature_raw.get("max_features", 50000), "features.max_features"),
         ngram_range=_ngram_range(feature_raw.get("ngram_range", [1, 2])),
+        char_ngram_range=_ngram_range(feature_raw.get("char_ngram_range", [3, 5])),
+        char_max_features=_optional_positive_int(feature_raw.get("char_max_features"), "features.char_max_features"),
         min_df=_document_frequency(feature_raw.get("min_df", 2), "features.min_df"),
         max_df=_document_frequency(feature_raw.get("max_df", 0.95), "features.max_df"),
         lowercase=bool(feature_raw.get("lowercase", True)),
+        use_text_stats=bool(feature_raw.get("use_text_stats", False)),
     )
     _validate_document_frequency_range(features.min_df, features.max_df)
 
@@ -117,6 +126,7 @@ def make_config(raw: dict[str, Any], project_root: str | Path | None = None) -> 
 
     train = TrainConfig(
         validation_size=_ratio(train_raw.get("validation_size", 0.15), "train.validation_size", inclusive_upper=False),
+        cv_folds=_positive_int(train_raw.get("cv_folds", 1), "train.cv_folds"),
         random_seed=_non_negative_int(train_raw.get("random_seed", 42), "train.random_seed"),
         max_iter=_positive_int(train_raw.get("max_iter", 1000), "train.max_iter"),
         solver=str(train_raw.get("solver", "lbfgs")),
@@ -264,6 +274,14 @@ def _class_weight(value: Any) -> str | dict[str, float] | None:
     if value == "balanced" or isinstance(value, dict):
         return value
     raise ValueError("train.class_weight must be null, 'balanced', or a class-to-weight mapping")
+
+
+def _feature_kind(value: Any) -> str:
+    kind = str(value)
+    allowed = {"word", "char", "word_char"}
+    if kind not in allowed:
+        raise ValueError(f"features.kind must be one of {sorted(allowed)}, got {kind}")
+    return kind
 
 
 def _ngram_range(value: Any) -> tuple[int, int]:

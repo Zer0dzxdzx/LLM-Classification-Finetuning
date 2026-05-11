@@ -60,6 +60,12 @@ python -m src.predict --config configs/baseline.yaml --output submissions/submis
 python scripts/run_kaggle_baseline.py
 ```
 
+比赛提交版本必须关闭 Internet。最终提交时优先使用 `docs/no_internet_kaggle_templates.md` 中的单 cell 模板，并确保输出：
+
+```text
+/kaggle/working/submission.csv
+```
+
 在 Kaggle GPU 上完成 Transformer 微调后生成提交：
 
 ```bash
@@ -81,6 +87,8 @@ python3 -m unittest discover -s tests
 4. 按 `docs/kaggle_baseline_runbook.md` 在 Kaggle 上提交第一版 baseline。
 5. 运行 `notebooks/03_finetune_kaggle.ipynb`，在 Kaggle GPU 上做小规模 Transformer 微调。
 6. 将每次实验结论写入 `docs/experiment_log.md`。
+
+提分路线见 `docs/score_improvement_plan.md`。
 
 ## 安全约束
 

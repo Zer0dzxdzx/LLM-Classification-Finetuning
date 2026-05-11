@@ -34,6 +34,31 @@ class ConfigTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "train.validation_size"):
             make_config(raw, project_root=PROJECT_ROOT)
 
+    def test_load_experiment_configs(self) -> None:
+        config_names = [
+            "baseline.yaml",
+            "tfidf_char.yaml",
+            "tfidf_word_char.yaml",
+            "tfidf_features.yaml",
+            "tfidf_cv.yaml",
+        ]
+
+        configs = [load_config(project_path("configs", name)) for name in config_names]
+
+        self.assertEqual(configs[1].features.kind, "char")
+        self.assertEqual(configs[2].features.kind, "word_char")
+        self.assertTrue(configs[3].features.use_text_stats)
+        self.assertEqual(configs[4].train.cv_folds, 3)
+
+    def test_invalid_feature_kind_fails(self) -> None:
+        raw = {
+            "data": {"train_path": "train.csv", "test_path": "test.csv"},
+            "features": {"kind": "unknown"},
+        }
+
+        with self.assertRaisesRegex(ValueError, "features.kind"):
+            make_config(raw, project_root=PROJECT_ROOT)
+
 
 if __name__ == "__main__":
     unittest.main()

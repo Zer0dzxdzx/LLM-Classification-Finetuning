@@ -10,6 +10,17 @@ import pandas as pd
 
 LABEL_COLUMNS = ["winner_model_a", "winner_model_b", "winner_tie"]
 TEXT_COLUMNS = ["prompt", "response_a", "response_b"]
+TEXT_STAT_COLUMNS = [
+    "prompt_chars",
+    "response_a_chars",
+    "response_b_chars",
+    "response_char_delta",
+    "response_char_abs_delta",
+    "response_char_ratio",
+    "responses_equal",
+    "response_a_empty",
+    "response_b_empty",
+]
 
 
 def read_csv_required(path: str | Path, purpose: str) -> pd.DataFrame:
@@ -36,25 +47,33 @@ def load_training_frame(
     if sample_size is not None and sample_size < len(frame):
         frame = frame.sample(n=sample_size, random_state=random_seed).reset_index(drop=True)
 
-    prepared = pd.DataFrame(
-        {
-            "id": frame["id"],
-            "text": [build_pair_text(row, text_max_chars=text_max_chars) for _, row in frame.iterrows()],
-            "target": [target_from_row(row) for _, row in frame.iterrows()],
-        }
-    )
+    rows = []
+    for _, row in frame.iterrows():
+        rows.append(
+            {
+                "id": row["id"],
+                "text": build_pair_text(row, text_max_chars=text_max_chars),
+                "target": target_from_row(row),
+                **text_stats_from_row(row),
+            }
+        )
+    prepared = pd.DataFrame(rows)
     return prepared
 
 
 def load_test_frame(test_path: str | Path, text_max_chars: int | None = None) -> pd.DataFrame:
     frame = read_csv_required(test_path, "Test")
     _require_columns(frame, ["id", *TEXT_COLUMNS], "test")
-    return pd.DataFrame(
-        {
-            "id": frame["id"],
-            "text": [build_pair_text(row, text_max_chars=text_max_chars) for _, row in frame.iterrows()],
-        }
-    )
+    rows = []
+    for _, row in frame.iterrows():
+        rows.append(
+            {
+                "id": row["id"],
+                "text": build_pair_text(row, text_max_chars=text_max_chars),
+                **text_stats_from_row(row),
+            }
+        )
+    return pd.DataFrame(rows)
 
 
 def build_pair_text(row: pd.Series | dict[str, object], text_max_chars: int | None = None) -> str:
@@ -65,6 +84,28 @@ def build_pair_text(row: pd.Series | dict[str, object], text_max_chars: int | No
     if text_max_chars is not None and text_max_chars > 0:
         return text[:text_max_chars]
     return text
+
+
+def text_stats_from_row(row: pd.Series | dict[str, object]) -> dict[str, float]:
+    prompt = normalize_text(row.get("prompt", ""))
+    response_a = normalize_text(row.get("response_a", ""))
+    response_b = normalize_text(row.get("response_b", ""))
+    prompt_chars = len(prompt)
+    response_a_chars = len(response_a)
+    response_b_chars = len(response_b)
+    delta = response_a_chars - response_b_chars
+    ratio = response_a_chars / max(response_b_chars, 1)
+    return {
+        "prompt_chars": float(prompt_chars),
+        "response_a_chars": float(response_a_chars),
+        "response_b_chars": float(response_b_chars),
+        "response_char_delta": float(delta),
+        "response_char_abs_delta": float(abs(delta)),
+        "response_char_ratio": float(ratio),
+        "responses_equal": float(response_a == response_b),
+        "response_a_empty": float(response_a_chars == 0),
+        "response_b_empty": float(response_b_chars == 0),
+    }
 
 
 def normalize_text(value: object) -> str:

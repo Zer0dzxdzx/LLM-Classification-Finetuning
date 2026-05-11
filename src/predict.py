@@ -18,7 +18,7 @@ def run_prediction(config: ProjectConfig, output_path: str | Path) -> dict[str, 
     class_order = artifact.get("class_order") or list(pipeline.named_steps["classifier"].classes_)
 
     test_frame = load_test_frame(config.data.test_path, text_max_chars=config.data.text_max_chars)
-    raw_probabilities = pipeline.predict_proba(test_frame["text"])
+    raw_probabilities = pipeline.predict_proba(test_frame)
     probabilities = align_probabilities(raw_probabilities, class_order, LABEL_COLUMNS)
     submission = make_submission_frame(test_frame["id"], probabilities)
     destination = write_submission(submission, output_path)
